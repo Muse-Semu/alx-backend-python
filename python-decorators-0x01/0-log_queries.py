@@ -1,19 +1,14 @@
 import sqlite3
 import functools
-import logging
-
-# Configure logging to output queries with a simple format
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s - Query: %(message)s'
-)
+from datetime import datetime
 
 def log_queries(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Log the SQL query (first argument or keyword 'query')
+        # Get the SQL query
         query = args[0] if args else kwargs.get('query', '')
-        logging.info(query)
+        # Log the query with timestamp using print
+        print(f"{datetime.now()} - Query: {query}")
         # Execute the original function
         return func(*args, **kwargs)
     return wrapper
@@ -28,5 +23,4 @@ def fetch_all_users(query):
     return results
 
 if __name__ == "__main__":
-    # Fetch users while logging the query
     users = fetch_all_users(query="SELECT * FROM users")
