@@ -1,18 +1,17 @@
 import sqlite3
 import functools
 import logging
-import time
 
-# Configure logging
+# Configure logging to output queries with a simple format
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - Query: %(message)s'
+    format='%(levelname)s - Query: %(message)s'
 )
 
 def log_queries(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Log the SQL query (first argument of the function)
+        # Log the SQL query (first argument or keyword 'query')
         query = args[0] if args else kwargs.get('query', '')
         logging.info(query)
         # Execute the original function
