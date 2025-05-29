@@ -7,7 +7,6 @@ from utils import access_nested_map, get_json, memoize
 
 
 class TestAccessNestedMap(unittest.TestCase):
-   
     @parameterized.expand([
         ({"a": 1}, ("a",), 1),
         ({"a": {"b": 2}}, ("a",), {"b": 2}),
@@ -22,6 +21,7 @@ class TestAccessNestedMap(unittest.TestCase):
         ({"a": 1}, ("a", "b"), "b"),
     ])
     def test_access_nested_map_exception(self, nested_map, path, expected_key):
+        """Test access_nested_map raises KeyError for invalid paths."""
         with self.assertRaises(KeyError) as cm:
             access_nested_map(nested_map, path)
         self.assertEqual(str(cm.exception), f"'{expected_key}'")
@@ -34,7 +34,6 @@ class TestGetJson(unittest.TestCase):
     ])
     @patch('requests.get')
     def test_get_json(self, test_url, test_payload, mock_get):
-        """Test that get_json returns expected payload and calls requests.get once."""
         mock_response = Mock()
         mock_response.json = lambda: test_payload
         mock_get.return_value = mock_response
@@ -44,7 +43,6 @@ class TestGetJson(unittest.TestCase):
 
 
 class TestMemoize(unittest.TestCase):
-
     def test_memoize(self):
         class TestClass:
             def a_method(self):
@@ -54,9 +52,8 @@ class TestMemoize(unittest.TestCase):
             def a_property(self):
                 return self.a_method()
 
-        with patch.object(TestClass, 'a_method') as mock_method:
-            mock_method.return_value = 42
-            test_instance = TestClass()
+        test_instance = TestClass()
+        with patch.object(test_instance, 'a_method', return_value=42) as mock_method:
             result1 = test_instance.a_property()
             result2 = test_instance.a_property()
             self.assertEqual(result1, 42)
