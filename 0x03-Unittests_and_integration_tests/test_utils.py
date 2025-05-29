@@ -2,7 +2,6 @@
 """Unit tests for utility functions in the utils module.
 
 This module contains test cases for the access_nested_map, get_json, and memoize
-functions, ensuring they behave as expected under various conditions.
 """
 
 import unittest
@@ -74,3 +73,4 @@ class TestMemoize(unittest.TestCase):
             self.assertEqual(result1, 42)
             self.assertEqual(result2, 42)
             mock_method.assert_called_once()
+
