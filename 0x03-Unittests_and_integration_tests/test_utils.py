@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for utility functions in the utils module.
-
-This module contains test cases for the access_nested_map, get_json, and memoize
-"""
+"""Unit tests for utility functions in the utils module."""
 
 import unittest
 from parameterized import parameterized
@@ -73,4 +70,3 @@ class TestMemoize(unittest.TestCase):
             self.assertEqual(result1, 42)
             self.assertEqual(result2, 42)
             mock_method.assert_called_once()
-
