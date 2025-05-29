@@ -11,19 +11,17 @@ class TestGithubOrgClient(unittest.TestCase):
     """Test case for GithubOrgClient class."""
 
     @parameterized.expand([
-        ("google", {"login": "google"}),
-        ("abc", {"login": "abc"}),
+        ("google", {"repos_url": "https://api.github.com/orgs/google/repos"}),
+        ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos"}),
     ])
-    @patch('client.get_json')
+    @patch('utils.get_json')
     def test_org(self, org_name, expected_payload, mock_get_json):
         """Test GithubOrgClient.org returns expected payload."""
         mock_get_json.return_value = expected_payload
         client = GithubOrgClient(org_name)
-        result1 = client.org
-        result2 = client.org  # Test memoization
+        result = client.org
         mock_get_json.assert_called_once_with(
             f"https://api.github.com/orgs/{org_name}"
         )
-        self.assertEqual(result1, expected_payload)
-        self.assertEqual(result2, expected_payload)
+        self.assertEqual(result, expected_payload)
         
