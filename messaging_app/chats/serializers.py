@@ -12,6 +12,7 @@ class MessageSerializer(serializers.ModelSerializer):
     """Serializer for the Message model, with sender and conversation as nested representations."""
     sender = UserSerializer(read_only=True)
     conversation = serializers.PrimaryKeyRelatedField(read_only=True)
+    message_body = serializers.CharField(max_length=2000, help_text="Message content")
 
     class Meta:
         model = Message
@@ -21,9 +22,20 @@ class MessageSerializer(serializers.ModelSerializer):
 class ConversationSerializer(serializers.ModelSerializer):
     """Serializer for the Conversation model, including nested participants and messages."""
     participants = UserSerializer(many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
+    messages = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
         fields = ['conversation_id', 'participants', 'created_at', 'updated_at', 'messages']
         read_only_fields = ['conversation_id', 'created_at', 'updated_at']
+
+    def get_messages(self, obj):
+        """Custom method to serialize messages for the conversation."""
+        messages = obj.messages.all()  # Access via related_name
+        return MessageSerializer(messages, many=True).data
+
+    def validate(self, data):
+        """Ensure a conversation has at least two participants."""
+        if 'participants' in data and len(data['participants']) < 2:
+            raise serializers.ValidationError("A conversation must have at least two participants.")
+        return data
