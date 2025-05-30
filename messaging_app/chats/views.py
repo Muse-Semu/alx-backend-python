@@ -1,23 +1,20 @@
-from django.shortcuts import render
-
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
 
 class ConversationViewSet(viewsets.ModelViewSet):
-    """ViewSet for listing and creating conversations."""
+    """ViewSet for listing and creating conversations with filtering."""
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['participants']  # Allow filtering by participant user_id
 
     def perform_create(self, serializer):
         """Save the conversation and set participants."""
         conversation = serializer.save()
-        # Add the requesting user as a participant (optional, depending on requirements)
         conversation.participants.add(self.request.user)
 
     def get_queryset(self):
@@ -25,19 +22,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Conversation.objects.filter(participants=self.request.user)
 
 class MessageViewSet(viewsets.ModelViewSet):
-    """ViewSet for listing and sending messages."""
+    """ViewSet for listing and sending messages with filtering."""
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['conversation']  # Allow filtering by conversation_id
 
     def perform_create(self, serializer):
         """Save the message with the requesting user as sender."""
         serializer.save(sender=self.request.user)
 
     def get_queryset(self):
-        """Optionally filter messages by conversation_id from query params."""
-        queryset = Message.objects.filter(conversation__participants=self.request.user)
-        conversation_id = self.request.query_params.get('conversation_id')
-        if conversation_id:
-            queryset = queryset.filter(conversation__conversation_id=conversation_id)
-        return queryset
+        """Return messages from conversations the user is part of."""
+        return Message.objects.filter(conversation__participants=self.request.user)
