@@ -1,5 +1,6 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
@@ -12,10 +13,14 @@ class ConversationViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['participants']  # Allow filtering by participant user_id
 
-    def perform_create(self, serializer):
-        """Save the conversation and set participants."""
-        conversation = serializer.save()
-        conversation.participants.add(self.request.user)
+    def create(self, request, *args, **kwargs):
+        """Create a new conversation and add the requesting user as a participant."""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            conversation = serializer.save()
+            conversation.participants.add(self.request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         """Return conversations where the user is a participant."""
@@ -29,9 +34,13 @@ class MessageViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['conversation']  # Allow filtering by conversation_id
 
-    def perform_create(self, serializer):
-        """Save the message with the requesting user as sender."""
-        serializer.save(sender=self.request.user)
+    def create(self, request, *args, **kwargs):
+        """Create a new message with the requesting user as sender."""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(sender=self.request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         """Return messages from conversations the user is part of."""
