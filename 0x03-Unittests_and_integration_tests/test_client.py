@@ -1,33 +1,26 @@
 #!/usr/bin/env python3
-"""Unit tests for GithubOrgClient
-"""
+"""Unit tests for client.GithubOrgClient class."""
 
 import unittest
-from unittest.mock import patch
 from parameterized import parameterized
+from unittest.mock import patch
 from client import GithubOrgClient
 
 
 class TestGithubOrgClient(unittest.TestCase):
-    """Test class for GithubOrgClient"""
+    """Test case for GithubOrgClient class."""
 
     @parameterized.expand([
-        ("google",),
-        ("abc",),
+        ("google", {"repos_url": "https://api.github.com/orgs/google/repos"}),
+        ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos"}),
     ])
-    @patch("client.get_json")
-    def test_org(self, org_name, mock_get_json):
-        """Test that GithubOrgClient.org returns the correct value"""
-        expected_result = {"login": org_name, "id": 123}
-        mock_get_json.return_value = expected_result
-
+    @patch('client.get_json')
+    def test_org(self, org_name, expected_payload, mock_get_json):
+        """Test GithubOrgClient.org returns expected payload."""
+        mock_get_json.return_value = expected_payload
         client = GithubOrgClient(org_name)
         result = client.org
-
-        mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
-        self.assertEqual(result, expected_result)
-
-
-if __name__ == "__main__":
-    unittest.main()
-    
+        mock_get_json.assert_called_once_with(
+            "https://api.github.com/orgs/{}".format(org_name)
+        )
+        self.assertEqual(result, expected_payload)
