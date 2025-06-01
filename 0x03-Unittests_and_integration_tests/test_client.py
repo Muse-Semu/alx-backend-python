@@ -95,3 +95,14 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         test_client = GithubOrgClient("google")
         result = test_client.public_repos(license="apache-2.0")
         self.assertEqual(result, self.apache2_repos)
+
+    def test_public_repos_calls(self):
+        """Test public_repos makes correct requests.get calls"""
+        with patch('requests.get') as mock_get:
+            mock_get.side_effect = self.setUpClass.side_effect
+            test_client = GithubOrgClient("google")
+            test_client.public_repos()
+            org_url = "https://api.github.com/orgs/google"
+            repos_url = self.org_payload["repos_url"]
+            mock_get.assert_any_call(org_url)
+            mock_get.assert_any_call(repos_url)
