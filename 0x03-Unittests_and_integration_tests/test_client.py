@@ -113,4 +113,4 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             repos_url = self.org_payload["repos_url"]
             mock_get.assert_any_call(org_url)
             mock_get.assert_any_call(repos_url)
-            
+          
