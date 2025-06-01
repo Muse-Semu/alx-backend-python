@@ -60,8 +60,10 @@ class TestGithubOrgClient(unittest.TestCase):
         result = GithubOrgClient.has_license(repo, license_key)
         self.assertEqual(result, expected)
 
-
-@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
+@parameterized_class(
+    ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'),
+    TEST_PAYLOAD
+)
 class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration tests for GithubOrgClient public_repos method"""
 
@@ -110,4 +112,4 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             repos_url = self.org_payload["repos_url"]
             mock_get.assert_any_call(org_url)
             mock_get.assert_any_call(repos_url)
-            
+           
