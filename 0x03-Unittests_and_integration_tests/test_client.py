@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch, Mock
 from parameterized import parameterized, parameterized_class
 from client import GithubOrgClient
+from fixtures import TEST_PAYLOAD
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -60,17 +61,7 @@ class TestGithubOrgClient(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-@parameterized_class([
-    {
-        "org_payload": {"repos_url": "https://api.github.com/orgs/test_org/repos"},
-        "repos_payload": [
-            {"name": "repo1", "license": {"key": "mit"}},
-            {"name": "repo2", "license": {"key": "apache-2.0"}}
-        ],
-        "expected_repos": ["repo1", "repo2"],
-        "apache2_repos": ["repo2"]
-    }
-])
+@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), TEST_PAYLOAD)
 class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration tests for GithubOrgClient public_repos method"""
 
@@ -95,13 +86,12 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
     def test_public_repos(self):
         """Test public_repos returns expected repos without license filter"""
-        test_client = GithubOrgClient("test_org")
+        test_client = GithubOrgClient("google")
         result = test_client.public_repos()
         self.assertEqual(result, self.expected_repos)
 
     def test_public_repos_with_license(self):
         """Test public_repos returns expected repos with apache-2.0 filter"""
-        test_client = GithubOrgClient("test_org")
+        test_client = GithubOrgClient("google")
         result = test_client.public_repos(license="apache-2.0")
         self.assertEqual(result, self.apache2_repos)
-        
