@@ -21,7 +21,7 @@ class TestGithubOrgClient(unittest.TestCase):
             f"https://api.github.com/orgs/{org_name}"
         )
 
-     def test_public_repos_url(self):
+    def test_public_repos_url(self):
         """Test GithubOrgClient._public_repos_url returns correct URL"""
         test_payload = {"repos_url": "https://api.github.com/orgs/test_org/repos"}
         with patch('client.GithubOrgClient.org', new_callable=unittest.mock.PropertyMock) as mock_org:
@@ -30,9 +30,8 @@ class TestGithubOrgClient(unittest.TestCase):
             result = test_client._public_repos_url
             self.assertEqual(result, test_payload["repos_url"])
 
-    
-     @patch('client.get_json')
-     def test_public_repos(self, mock_get_json):
+    @patch('client.get_json')
+    def test_public_repos(self, mock_get_json):
         """Test GithubOrgClient.public_repos returns expected repos list"""
         test_repos_payload = [
             {"name": "repo1", "license": {"key": "mit"}},
