@@ -8,6 +8,7 @@ from client import GithubOrgClient
 
 
 class TestGithubOrgClient(unittest.TestCase):
+    """Unit tests for GithubOrgClient class functionality"""
     @parameterized.expand([
         ("google",),
         ("abc",),
@@ -48,5 +49,4 @@ class TestGithubOrgClient(unittest.TestCase):
             self.assertEqual(result, ["repo1", "repo2"])
             mock_repos_url.assert_called_once()
             mock_get_json.assert_called_once_with(test_repos_url)
-
             
