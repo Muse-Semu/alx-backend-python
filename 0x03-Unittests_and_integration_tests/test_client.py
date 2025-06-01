@@ -72,8 +72,10 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             mock = Mock()
             if url == cls.org_payload["repos_url"]:
                 mock.json.return_value = cls.repos_payload
-            else:
+            elif url == "https://api.github.com/orgs/google":
                 mock.json.return_value = cls.org_payload
+            else:
+                raise ValueError(f"Unexpected URL: {url}")
             return mock
 
         cls.get_patcher = patch('requests.get', side_effect=side_effect)
@@ -98,11 +100,11 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
     def test_public_repos_calls(self):
         """Test public_repos makes correct requests.get calls"""
-        with patch('requests.get') as mock_get:
-            mock_get.side_effect = self.setUpClass.side_effect
-            test_client = GithubOrgClient("google")
-            test_client.public_repos()
-            org_url = "https://api.github.com/orgs/google"
-            repos_url = self.org_payload["repos_url"]
-            mock_get.assert_any_call(org_url)
-            mock_get.assert_any_call(repos_url)
+        test_client = GithubOrgClient("google")
+        test_client.public_repos()
+        org_url = "https://api.github.com/orgs/google"
+        repos_url = self.org_payload["repos_url"]
+        mock_get = self.get_patcher.start.call_args[0][0]
+        mock_get.assert_any_call(org_url)
+        mock_get.assert_any_call(repos_url)
+        
