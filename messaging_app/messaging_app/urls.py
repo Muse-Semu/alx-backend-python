@@ -23,4 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('chats.urls')),  # Include chats app routes for conversations and messages
     path('api-auth/', include('rest_framework.urls')),  # Include DRF authentication endpoints
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # JWT refresh
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
