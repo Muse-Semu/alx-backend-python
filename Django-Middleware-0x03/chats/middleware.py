@@ -1,6 +1,8 @@
 import logging
-from datetime import datetime
-from django.http import HttpResponseForbidden
+from datetime import datetime, timedelta
+from pathlib import Path
+from django.http import HttpResponseForbidden, HttpResponse
+from threading import Lock
 
 # Configure logger for RequestLoggingMiddleware
 logging.basicConfig(
@@ -33,6 +35,47 @@ class RestrictAccessByTimeMiddleware:
     def __call__(self, request):
         """Check server time and deny access outside 6 PM to 9 PM."""
         current_hour = datetime.now().hour
-        if not (18 <= current_hour < 21):  # 6 PM (18:00) to 9 PM (21:00)
+        if not (18 <= current_hour < 21):
             return HttpResponseForbidden("Access to the messaging app is restricted outside 6 PM to 9 PM.")
+        return self.get_response(request)
+
+class OffensiveLanguageMiddleware:
+    """Middleware to limit chat messages to 5 per minute per IP address."""
+    
+    # In-memory storage for IP request counts and timestamps
+    _request_counts = {}
+    _lock = Lock()  # Ensure thread safety
+    
+    def __init__(self, get_response):
+        """Initialize the middleware with the get_response callable."""
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """Check POST request rate limit per IP address."""
+        if request.method == 'POST' and 'conversations' in request.path and 'messages' in request.path:
+            ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))
+            if ip_address:
+                ip_address = ip_address.split(',')[0].strip()  # Use first IP if behind proxy
+
+            with self._lock:
+                # Clean up old requests
+                now = datetime.now()
+                if ip_address in self._request_counts:
+                    self._request_counts[ip_address] = [
+                        timestamp for timestamp in self._request_counts[ip_address]
+                        if now - timestamp < timedelta(minutes=1)
+                    ]
+                else:
+                    self._request_counts[ip_address] = []
+
+                # Check rate limit
+                if len(self._request_counts[ip_address]) >= 5:
+                    return HttpResponse(
+                        "Rate limit exceeded: 5 messages per minute allowed.",
+                        status=429
+                    )
+
+                # Record request
+                self._request_counts[ip_address].append(now)
+
         return self.get_response(request)
