@@ -5,13 +5,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from django.shortcuts import get_object_or_404
-from .permissions import IsOwnerOrParticipant
+from .permissions import IsParticipantOfConversation
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """ViewSet for listing and creating conversations with filtering."""
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrParticipant]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['participants']
 
@@ -32,7 +32,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     """ViewSet for listing and sending messages with filtering."""
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrParticipant]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['conversation']
 
@@ -42,7 +42,14 @@ class MessageViewSet(viewsets.ModelViewSet):
         if not conversation_id:
             return Response({"detail": "Conversation ID is required."}, status=status.HTTP_400_BAD_REQUEST)
         
-        conversation = get_object_or_404(Conversation, conversation_id=conversation_id, participants=self.request.user)
+        try:
+            conversation = Conversation.objects.get(conversation_id=conversation_id)
+            # Explicit permission check
+            if not conversation.participants.filter(user_id=request.user.user_id).exists():
+                return Response({"detail": "You are not a participant in this conversation."}, status=status.HTTP_403_FORBIDDEN)
+        except Conversation.DoesNotExist:
+            return Response({"detail": "Conversation does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
         data = request.data.copy()
         data['conversation'] = conversation.conversation_id
         serializer = self.get_serializer(data=data)
