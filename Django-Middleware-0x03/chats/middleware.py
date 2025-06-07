@@ -42,9 +42,8 @@ class RestrictAccessByTimeMiddleware:
 class OffensiveLanguageMiddleware:
     """Middleware to limit chat messages to 5 per minute per IP address."""
     
-    # In-memory storage for IP request counts and timestamps
     _request_counts = {}
-    _lock = Lock()  # Ensure thread safety
+    _lock = Lock()
     
     def __init__(self, get_response):
         """Initialize the middleware with the get_response callable."""
@@ -55,10 +54,9 @@ class OffensiveLanguageMiddleware:
         if request.method == 'POST' and 'conversations' in request.path and 'messages' in request.path:
             ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))
             if ip_address:
-                ip_address = ip_address.split(',')[0].strip()  # Use first IP if behind proxy
+                ip_address = ip_address.split(',')[0].strip()
 
             with self._lock:
-                # Clean up old requests
                 now = datetime.now()
                 if ip_address in self._request_counts:
                     self._request_counts[ip_address] = [
@@ -68,14 +66,32 @@ class OffensiveLanguageMiddleware:
                 else:
                     self._request_counts[ip_address] = []
 
-                # Check rate limit
                 if len(self._request_counts[ip_address]) >= 5:
                     return HttpResponse(
                         "Rate limit exceeded: 5 messages per minute allowed.",
                         status=429
                     )
 
-                # Record request
                 self._request_counts[ip_address].append(now)
 
+        return self.get_response(request)
+
+class RolePermissionMiddleware:
+    """Middleware to restrict access to admin or moderator roles."""
+    
+    def __init__(self, get_response):
+        """Initialize the middleware with the get_response callable."""
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """Check if user has admin or moderator role, except for token endpoints."""
+        if request.path in ['/api/token/', '/api/token/refresh/']:
+            return self.get_response(request)
+        
+        if not request.user.is_authenticated:
+            return HttpResponseForbidden("Authentication required.")
+        
+        if request.user.role not in ['admin', 'moderator']:
+            return HttpResponseForbidden("Access restricted to admin or moderator roles.")
+        
         return self.get_response(request)
