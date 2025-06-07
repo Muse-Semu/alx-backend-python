@@ -76,7 +76,7 @@ class OffensiveLanguageMiddleware:
 
         return self.get_response(request)
 
-class RolePermissionMiddleware:
+class RolepermissionMiddleware:
     """Middleware to restrict access to admin or moderator roles."""
     
     def __init__(self, get_response):
