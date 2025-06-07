@@ -70,6 +70,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'chats.middleware.RequestLoggingMiddleware',  # Add custom middleware
+    'chats.middleware.RestrictAccessByTimeMiddleware' # Add time restriction middleware
 
 ]
 
