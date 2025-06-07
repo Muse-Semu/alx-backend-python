@@ -55,6 +55,8 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',  # Add filter backend
     ],
+    'DEFAULT_PAGINATION_CLASS': 'chats.pagination.MessagePagination',  # Set custom pagination
+    'PAGE_SIZE': 20, 
 }
 
 MIDDLEWARE = [
