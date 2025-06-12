@@ -27,7 +27,7 @@ class MessageHistory(models.Model):
     def __str__(self):
         return f"Edit of {self.original_message} at {self.edited_at}"
 
-        
+
     
 class Message(models.Model):
     message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -74,6 +74,35 @@ class Message(models.Model):
 
 
 
+class MessageQuerySet(models.QuerySet):
+    def with_related_data(self):
+        """Optimized query with all related data"""
+        return self.select_related(
+            'sender',
+            'receiver',
+            'parent_message__sender'
+        ).prefetch_related(
+            Prefetch('replies', queryset=Message.objects.select_related('sender'))
+        )
+
+    def get_conversation_threads(self, user1, user2):
+        """Get all message threads between two users"""
+        return self.filter(
+            models.Q(sender=user1, receiver=user2) |
+            models.Q(sender=user2, receiver=user1),
+            parent_message__isnull=True  # Only root messages
+        ).with_related_data()
+
+    def get_full_thread(self, root_message_id):
+        """Get a complete thread with all replies"""
+        return self.filter(
+            models.Q(message_id=root_message_id) |
+            models.Q(parent_message__message_id=root_message_id)
+        ).with_related_data().order_by('timestamp')
+
+# Attach the custom queryset to the model
+Message.objects = MessageQuerySet.as_manager()
+
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     message = models.ForeignKey(Message, on_delete=models.CASCADE)
@@ -96,3 +125,5 @@ class MessageHistory(models.Model):
     
     def __str__(self):
         return f"Edit history for message {self.message.id} at {self.edited_at}"
+
+
