@@ -31,3 +31,19 @@ def log_message_edit(sender, instance, **kwargs):
                 instance.last_edited = timezone.now()
         except Message.DoesNotExist:
             pass  # New message being created
+
+@receiver(post_delete, sender=User)
+def cleanup_user_data(sender, instance, **kwargs):
+    """
+    Cleans up all user-related data when a user is deleted.
+    """
+    # Delete all messages where user is sender or receiver
+    Message.objects.filter(sender=instance).delete()
+    Message.objects.filter(receiver=instance).delete()
+    
+    # Delete all message history where user edited messages
+    MessageHistory.objects.filter(edited_by=instance).delete()
+    
+    # Delete all notifications where user is recipient or sender
+    Notification.objects.filter(recipient=instance).delete()
+    Notification.objects.filter(sender=instance).delete() 
