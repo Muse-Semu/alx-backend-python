@@ -9,12 +9,13 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Install dependencies
-COPY Requirements.txt .
-RUN pip install --no-cache-dir -r Requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY . .
 
+# Note: To map the container port to the host, use ["-p"] 8000:8000 in the docker run command, e.g., docker run ["-p"] 8000:8000 messaging_app
 # Expose the port the app runs on
 EXPOSE 8000
 
