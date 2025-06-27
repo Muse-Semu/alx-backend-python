@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: django-messaging-app
-        image: django-messaging-app:latest
+        image: django-messaging-app:2.0
         ports:
         - containerPort: 8000
         env:
