@@ -19,9 +19,9 @@ pipeline {
                 sh '''
                     python${PYTHON_VERSION} -m venv venv
                     . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install pytest pytest-html
-                    pip install -r messaging_app/requirements.txt
+                    pip3 install --upgrade pip
+                    pip3 install pytest pytest-html
+                    pip3 install -r messaging_app/requirements.txt
                 '''
             }
         }
