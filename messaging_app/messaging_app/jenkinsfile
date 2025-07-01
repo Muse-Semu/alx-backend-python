@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+    environment {
+        // Define Python version
+        PYTHON_VERSION = '3.8'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                // Pull code from GitHub repository
+                git branch: 'main', 
+                    credentialsId: 'github-credentials', 
+                    url: 'https://github.com/alx-backend-python.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                // Set up Python environment and install dependencies
+                sh '''
+                    python${PYTHON_VERSION} -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install pytest pytest-html
+                    pip install -r messaging_app/requirements.txt
+                '''
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                // Run pytest and generate HTML report
+                sh '''
+                    . venv/bin/activate
+                    pytest messaging_app/tests/ --html=report.html --self-contained-html
+                '''
+            }
+        }
+    }
+    post {
+        always {
+            // Archive the test report
+            archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
+        }
+        success {
+            echo 'Tests completed successfully!'
+        }
+        failure {
+            echo 'Tests failed. Check the report for details.'
+        }
+    }
+}
