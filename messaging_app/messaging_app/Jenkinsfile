@@ -1,8 +1,10 @@
 pipeline {
     agent any
     environment {
-        // Define Python version
+        // Define Python version and Docker Hub credentials
         PYTHON_VERSION = '3.8'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE = 'your_dockerhub_username/messaging-app'
     }
     stages {
         stage('Checkout') {
@@ -34,17 +36,41 @@ pipeline {
                 '''
             }
         }
+        stage('Build Docker Image') {
+            steps {
+                // Build Docker image for the Django app
+                sh '''
+                    docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} messaging_app/
+                    docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                '''
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                // Log in to Docker Hub and push the image
+                sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker push ${DOCKER_IMAGE}:latest
+                '''
+            }
+        }
     }
     post {
         always {
             // Archive the test report
             archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
+            // Clean up Docker images to save space
+            sh '''
+                docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true
+                docker rmi ${DOCKER_IMAGE}:latest || true
+            '''
         }
         success {
-            echo 'Tests completed successfully!'
+            echo 'Pipeline completed successfully! Docker image built and pushed.'
         }
         failure {
-            echo 'Tests failed. Check the report for details.'
+            echo 'Pipeline failed. Check the logs for details.'
         }
     }
 }
